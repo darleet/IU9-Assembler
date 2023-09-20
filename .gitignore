@@ -1,0 +1,7 @@
+# Ignore compiled and linked files
+*.obj
+*.OBJ
+*.map
+*.MAP
+*.exe
+*.EXE
