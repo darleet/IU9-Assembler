@@ -3,9 +3,9 @@ assume CS:code,DS:data
 ; 4*a + b*d + c
 
 data segment
-a dw 4
+a db 4
 b db 2
-c dw 3
+c db 3
 d db 4
 result dw ?
 output db 12 dup(0) ; 65535 max dec num, FFFF max hex num
@@ -15,19 +15,21 @@ code segment
 start:
     mov AX, data
     mov DS, AX
+    xor AX, AX
 
 calc:
-    mov AX, a
+    mov AL, a
     mov CL, 2
-    shl AX, CL ; AX = 4*a
+    shl AL, CL ; AX = 4*a
     mov result, AX
+
     mov AL, b
-    mov BL, d
-    mul BL ; AX = b*d
-    add AX, c ; AX = b*d + c
+    mul d ; AX = b*d
+
+    add AL, c ; AX = b*d + c
     add result, AX
 
-    mov BL, 10h ; BL - divider
+    mov BL, 16 ; BL - divider
 
 prep:
     mov AX, result
