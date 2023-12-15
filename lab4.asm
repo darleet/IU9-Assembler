@@ -173,8 +173,9 @@ usub proc
         jge savesub
 
         saverem:
-            sub bl, al
-            push bx
+            add al, dl
+            sub al, bl
+            push ax
             mov bl, 1
             jmp repsub
         savesub:
@@ -216,6 +217,8 @@ usub proc
         pop bp
         ret
 usub endp
+
+
 
 inputstr proc
     push bp
