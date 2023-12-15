@@ -77,6 +77,11 @@ uadd proc
     mov dx, [bp+10] ; notation
 
     digitadd:
+        cmp [si], byte ptr 2dh
+        je direm
+        cmp [di], byte ptr 2dh
+        je sirem
+
         mov al, [si]
         add al, [di]
 
@@ -105,18 +110,22 @@ uadd proc
             jmp digitadd
     
         sirem: ; if rem left in si
+            cmp [si], byte ptr 2dh
+            je saveres
             cmp cl, 0
             jz saveres
+            mov al, [si]
             dec si
             dec cl
-            mov al, [si]
             jmp cmprem
         direm: ; if rem left in di
+            cmp [di], byte ptr 2dh
+            je saveres
             cmp ch, 0
             jz saveres
+            mov al, [di]
             dec di
             dec ch
-            mov al, [di]
             jmp cmprem
     
     saveres:
@@ -165,6 +174,9 @@ usub proc
     mov dx, [bp+10] ; notation
 
     digitsub:
+        cmp [di], byte ptr 2dh
+        je repsub
+
         mov al, [si]
         add bl, [di] ; add is used to add to remainder if left in bl
 
@@ -218,7 +230,77 @@ usub proc
         ret
 usub endp
 
+iadd proc
+    push bp
+    mov bp, sp
 
+    xor cx, cx
+    xor ax, ax
+
+    mov si, [bp+8]
+    add si, 2
+
+    mov di, [bp+6]
+    add di, 2
+
+    cmp [si], byte ptr 2dh
+    je firstneg
+    cmp [di], byte ptr 2dh
+    je secondneg
+    jmp bothpos
+
+    firstneg:
+        cmp [di], byte ptr 2dh
+        je bothneg
+        push [bp+10]
+        push [bp+6]
+        push [bp+8]
+        push [bp+4]
+        call usub
+        pop di
+        jmp retiadd
+    
+    secondneg:
+        push [bp+10]
+        push [bp+8]
+        push [bp+6]
+        push [bp+4]
+        call usub
+        pop di
+        jmp retiadd
+
+    bothneg:
+        push [bp+10]
+        push [bp+8]
+        push [bp+6]
+
+        mov di, [bp+4]
+        inc di
+        push di
+
+        call uadd
+
+        pop di
+        dec di
+        mov [di], byte ptr 2dh
+
+        jmp retiadd
+    
+    bothpos:
+        push [bp+10]
+        push [bp+8]
+        push [bp+6]
+        push [bp+4]
+        call uadd
+        pop di
+
+    retiadd:
+        pop di
+        pop di
+        pop di
+        pop bp
+        ret
+iadd endp
 
 inputstr proc
     push bp
@@ -297,13 +379,16 @@ printarr proc
     format:
         cmp [si], byte ptr '$'
         je printstr
+        cmp [si], byte ptr 2dh
+        je repformat
         cmp [si], byte ptr 10
         jl addnum
         add [si], byte ptr 7h
         addnum:
             add [si], byte ptr 30h
-        inc si
-        jmp format
+        repformat:
+            inc si
+            jmp format
     
     printstr:
         mov dx, di
@@ -330,7 +415,9 @@ readstr:
 
 testadd:
     ; call uadd
-    call usub
+    ; call usub
+    ; call umul
+    call iadd
     call printarr
 
 exit:
