@@ -205,32 +205,59 @@ iadd proc
     mov bp, sp
 
     xor cx, cx
-    xor ax, ax
 
     mov si, [bp+8]
-    add si, 2
+    inc si
+    mov cl, [si]
+    inc si
 
     mov di, [bp+6]
-    add di, 2
+    inc di
+    mov ch, [di]
+    inc di
 
-    cmp [si], byte ptr 2dh
-    je firstneg
-    cmp [di], byte ptr 2dh
-    je secondneg
-    jmp bothpos
+    cmp cl, ch
+    jne lencheck
 
-    firstneg:
+    cmpstr:
+        dec cl
+        jz swapstr
+        dec ch
+        jz swapstr
+        mov al, [di]
+        cmp [si], al
+        jl swapstr
+        inc si
+        inc di
+        jmp cmpstr
+
+    lencheck:
+        cmp cl, ch
+        jg negcheck
+
+    swapstr:
+        xor si, di
+        xor di, si
+        xor si, di
+    
+    negcheck:
+        mov si, [bp+8]
+        add si, 2
+
+        mov di, [bp+6]
+        add di, 2
+
+        cmp [si], byte ptr 2dh
+        je othercheck
+        cmp [di], byte ptr 2dh
+        je oneneg
+        jmp bothpos
+    
+    othercheck:
         cmp [di], byte ptr 2dh
         je bothneg
-        push [bp+10]
-        push [bp+6]
-        push [bp+8]
-        push [bp+4]
-        call usub
-        pop di
-        jmp retiadd
-    
-    secondneg:
+
+    oneneg:
         push [bp+10]
         push [bp+8]
         push [bp+6]
@@ -346,14 +373,29 @@ printarr proc
 
     mov si, [bp+4]
     mov di, si
+    xor dl, dl
 
-    cmp [di], byte ptr 0
-    jne format
-    removezeros:
-        inc di
+    cmp [di], byte ptr 2dh
+    jne formatzeros
+    inc di
+    mov dl, 1
+
+    formatzeros:
         cmp [di], byte ptr 0
-        je removezeros
-    dec di
+        jne addminus
+        removezeros:
+            inc di
+            cmp [di], byte ptr 0
+            je removezeros
+            cmp [di], byte ptr '$'
+            jne addminus
+            dec di
+            jmp format
+        addminus:
+            cmp dl, 1
+            jne format
+            dec di
+            mov [di], byte ptr 2dh
 
     format:
         cmp [si], byte ptr '$'
