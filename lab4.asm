@@ -10,49 +10,6 @@ data ends
 
 code segment
 
-; cmpstr places the greater string on head of stack and
-; the other string under the greater one and also lengths
-; of both strings under the two strings, where al - max str, 
-; ah - min str
-; cmpstr proc
-;     push bp
-;     mov bp, sp
-
-;     mov si, [bp+4]
-;     inc si
-;     mov al, [si]
-
-;     mov si, [bp+6]
-;     inc si
-;     mov ah, [si]
-
-;     cmp al, ah
-;     jl secondgreater
-
-;     firstgreater:
-;         mov si, [bp+4]
-;         mov di, [bp+6]
-;         jmp retval
-;     secondgreater:
-;         mov si, [bp+6]
-;         mov di, [bp+6]
-;         xor al, ah
-;         xor ah, al
-;         xor al, ah ; changed order
-
-;     retval:
-;         add si, 2
-;         add di, 2
-;         pop bp
-;         pop dx
-;         push ax
-;         push di
-;         push si
-;         push dx
-;         push bp
-;         ret
-; cmpstr endp
-
 uadd proc
     push bp
     mov bp, sp
@@ -86,8 +43,6 @@ uadd proc
         add al, [di]
 
         cmprem:
-            cmp bh, 0
-            jz getrem
             add al, bh
             xor bh, bh
 
@@ -115,18 +70,32 @@ uadd proc
             cmp cl, 0
             jz saveres
             mov al, [si]
+            add al, bh
+            xor bh, bh
+            div dl
+            mov bh, al ; bh - remainder
+            push ax ; ah - digit
+            inc bl ; bl - number of digits
+            xor ax, ax
             dec si
             dec cl
-            jmp cmprem
+            jmp sirem
         direm: ; if rem left in di
             cmp [di], byte ptr 2dh
             je saveres
             cmp ch, 0
             jz saveres
             mov al, [di]
+            add al, bh
+            xor bh, bh
+            div dl
+            mov bh, al ; bh - remainder
+            push ax ; ah - digit
+            inc bl ; bl - number of digits
+            xor ax, ax
             dec di
             dec ch
-            jmp cmprem
+            jmp direm
     
     saveres:
         mov di, [bp+4]
@@ -174,13 +143,14 @@ usub proc
     mov dx, [bp+10] ; notation
 
     digitsub:
-        cmp [di], byte ptr 2dh
-        je repsub
-
+        inc bh
         mov al, [si]
+
+        cmp [di], byte ptr 2dh
+        je savesub
+
         add bl, [di] ; add is used to add to remainder if left in bl
 
-        inc bh
         cmp al, bl
         jge savesub
 
@@ -302,6 +272,15 @@ iadd proc
         ret
 iadd endp
 
+umult proc
+    push bp
+    mov bp, sp
+
+    retumult:
+        pop bp
+        ret
+umult endp
+
 inputstr proc
     push bp
     mov bp, sp
@@ -416,8 +395,9 @@ readstr:
 testadd:
     ; call uadd
     ; call usub
-    ; call umul
+    ; call umult
     call iadd
+    ; call imult
     call printarr
 
 exit:
