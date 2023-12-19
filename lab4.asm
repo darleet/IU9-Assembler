@@ -303,7 +303,110 @@ umult proc
     push bp
     mov bp, sp
 
+    mov si, [bp+4]
+    inc si
+    mov [si], byte ptr 1
+    inc si
+    mov [si], byte ptr 0
+    inc si
+    mov [si], byte ptr '$'
+
+    xor cx, cx
+    xor dx, dx
+    xor ax, ax
+
+    mov di, [bp+6]
+    inc di
+    mov cl, [di]
+    add di, cx
+
+    mov si, [bp+8]
+    inc si
+    mov dl, [si]
+
+    xor ax, ax
+    xor bx, bx ; bh - num of digits
+
+    jmp multprep
+
+    addzero:
+        inc dl
+        add si, dx
+        mov [si], byte ptr 0
+        sub si, dx
+        mov [si], dl
+
+    multprep:
+        mov al, [di]
+        cmp al, 0
+        jz repcheck
+
+    multrepeat:
+        push di
+        push cx
+        push ax
+        push si
+        push dx
+
+        push [bp+10]
+        push [bp+8]
+
+        mov si, [bp+4]
+        push si
+        inc si
+
+        xor cl, cl
+        mov di, si
+        inc di
+
+        calclen:
+            cmp [di], byte ptr '$'
+            je savelen
+            inc cl
+            inc di
+            jmp calclen
+        savelen:
+            mov [si], cl
+
+        inc si
+        push si
+
+        call uadd
+
+        pop si
+        pop si
+        pop si
+        pop dx
+
+        pop dx
+        pop si
+        pop ax
+        pop cx
+        pop di
+
+        dec al
+        jnz multrepeat
+    
+    repcheck:
+        dec di
+        dec cl
+        jnz addzero
+
+    mov si, [bp+4]
+    add si, 2
+    mov di, [bp+4]
+
+    savemultdigit:
+        cmp [si], byte ptr '$'
+        je retumult
+        mov al, [si]
+        mov [di], al
+        inc si
+        inc di
+        jmp savemultdigit
+
     retumult:
+        mov [di], byte ptr '$'
         pop bp
         ret
 umult endp
@@ -437,8 +540,8 @@ readstr:
 testadd:
     ; call uadd
     ; call usub
-    ; call umult
-    call iadd
+    call umult
+    ; call iadd
     ; call imult
     call printarr
 
