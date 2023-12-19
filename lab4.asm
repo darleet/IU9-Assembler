@@ -340,6 +340,8 @@ umult proc
         mov al, [di]
         cmp al, 0
         jz repcheck
+        cmp al, 2dh
+        je repcheck
 
     multrepeat:
         push di
@@ -410,6 +412,60 @@ umult proc
         pop bp
         ret
 umult endp
+
+imult proc
+    push bp
+    mov bp, sp
+
+    mov si, [bp+8]
+    add si, 2
+
+    mov di, [bp+6]
+    add di, 2
+
+    cmp [si], byte ptr 2dh
+    je othercheckmult
+    cmp [di], byte ptr 2dh
+    je negmult
+    jmp posmult
+
+    othercheckmult:
+        cmp [di], byte ptr 2dh
+        je posmult
+
+    negmult:
+        push [bp+10]
+        push [bp+8]
+        push [bp+6]
+
+        mov di, [bp+4]
+        inc di
+        push di
+
+        call umult
+
+        pop di
+        dec di
+        mov [di], byte ptr 2dh
+
+        jmp retimult
+
+    posmult:
+        push [bp+10]
+        push [bp+8]
+        push [bp+6]
+        push [bp+4]
+        call umult
+        pop di
+        jmp retimult
+
+    retimult:
+        pop di
+        pop di
+        pop di
+        pop bp
+        ret
+imult endp
 
 inputstr proc
     push bp
@@ -540,9 +596,9 @@ readstr:
 testadd:
     ; call uadd
     ; call usub
-    call umult
+    ; call umult
     ; call iadd
-    ; call imult
+    call imult
     call printarr
 
 exit:
