@@ -5,8 +5,6 @@ assume cs:code, ds:data
 include \bmstu\format.asm
 
 data segment
-    input db 64, 65 dup(0)
-    output db 64 dup(0)
     symbol db ?
 
     path1 db "\BMSTU\LAB5_IN.TXT", 0
